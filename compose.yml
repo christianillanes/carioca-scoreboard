@@ -1,0 +1,9 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces:cached
+      - ~/.ssh/:/home/node/.ssh/:ro
+    command: sleep infinity
