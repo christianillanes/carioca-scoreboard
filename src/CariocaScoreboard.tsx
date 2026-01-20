@@ -53,8 +53,11 @@ function CariocaScoreboard() {
       
       if (players.length > 0) {
         for (let round = 0; round < 8; round++) {
-          const maxScore = Math.max(...players.map(p => p.scores[round] ?? 0))
-          newScores[round] = maxScore
+          const roundScores = players.map(p => p.scores[round]).filter(s => s !== null)
+          if (roundScores.length > 0) {
+            const maxScore = Math.max(...roundScores.map(s => s ?? 0))
+            newScores[round] = maxScore
+          }
         }
       }
       
