@@ -59,7 +59,11 @@ function CariocaScoreboard() {
         
         // Copy scores from one of the losing players
         const losingPlayer = players[losingPlayers[0].index]
-        newScores = [...losingPlayer.scores]
+        newScores = losingPlayer.scores.map((score, round) => {
+          // For earlier rounds (before current), give at least 5 points if score is 0 or null
+          if (round < currentRound && (score === null || score === 0)) return 5
+          return score
+        })
       }
       
       setPlayers([...players, { name: newPlayerName.trim(), scores: newScores, winners: newWinners }])
