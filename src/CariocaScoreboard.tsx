@@ -22,9 +22,9 @@ function CariocaScoreboard() {
   const [players, setPlayers] = useState<Player[]>(() => {
     const saved = localStorage.getItem('carioca-players')
     if (saved) {
-      const parsed = JSON.parse(saved)
+      const parsed = JSON.parse(saved) as Player[]
       // Migrate old data to include winners field
-      return parsed.map((p: any) => ({
+      return parsed.map((p) => ({
         ...p,
         winners: p.winners || Array(8).fill(false)
       }))
@@ -108,12 +108,12 @@ function CariocaScoreboard() {
   }
 
   const getTotalScore = (player: Player) => {
-    return player.scores.reduce((sum, score) => sum + (score ?? 0), 0)
+    return player.scores.reduce((sum, score) => (sum ?? 0) + (score ?? 0), 0)
   }
 
   const getRank = (playerIndex: number) => {
     const playerTotal = getTotalScore(players[playerIndex])
-    const uniqueScores = [...new Set(players.map(p => getTotalScore(p)))].sort((a, b) => a - b)
+    const uniqueScores = [...new Set(players.map(p => getTotalScore(p)))].sort((a, b) => (a ?? 0) - (b ?? 0))
     return uniqueScores.indexOf(playerTotal) + 1
   }
 
