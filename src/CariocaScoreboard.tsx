@@ -30,6 +30,7 @@ function CariocaScoreboard() {
     const saved = localStorage.getItem('carioca-round')
     return saved ? parseInt(saved) : 0
   })
+  const [editingCell, setEditingCell] = useState<{player: number, round: number, value: string} | null>(null)
 
   const t = translations[language]
   const ROUNDS = t.rounds
@@ -79,7 +80,13 @@ function CariocaScoreboard() {
     setPlayers(newPlayers)
   }
 
-  const updateScore = (playerIndex: number, round: number, score: string) => {
+  const handleScoreChange = (playerIndex: number, round: number, value: string) => {
+    setEditingCell({ player: playerIndex, round, value })
+  }
+
+  const commitScore = (playerIndex: number, round: number, score: string) => {
+    setEditingCell(null)
+    
     if (score === '') {
       const newPlayers = [...players]
       newPlayers[playerIndex].scores[round] = null
@@ -88,9 +95,18 @@ function CariocaScoreboard() {
     }
     
     const newScore = parseInt(score)
+    if (isNaN(newScore)) {
+      const newPlayers = [...players]
+      newPlayers[playerIndex].scores[round] = null
+      setPlayers(newPlayers)
+      return
+    }
     
     if (newScore % 5 !== 0) {
       alert(t.errorMultiple5)
+      const newPlayers = [...players]
+      newPlayers[playerIndex].scores[round] = null
+      setPlayers(newPlayers)
       return
     }
     
@@ -98,6 +114,9 @@ function CariocaScoreboard() {
       const hasWinner = players.some((p, i) => i !== playerIndex && p.scores[round] === 0)
       if (hasWinner) {
         alert(t.errorOneWinner)
+        const newPlayers = [...players]
+        newPlayers[playerIndex].scores[round] = null
+        setPlayers(newPlayers)
         return
       }
     }
@@ -222,8 +241,10 @@ function CariocaScoreboard() {
                           </button>
                           <input
                             type="number"
-                            value={score ?? ''}
-                            onChange={(e) => updateScore(pIndex, rIndex, e.target.value)}
+                            value={editingCell?.player === pIndex && editingCell?.round === rIndex ? editingCell.value : (score ?? '')}
+                            onChange={(e) => handleScoreChange(pIndex, rIndex, e.target.value)}
+                            onBlur={(e) => commitScore(pIndex, rIndex, e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && commitScore(pIndex, rIndex, e.currentTarget.value)}
                             min="0"
                             step="5"
                             disabled={player.winners[rIndex] || rIndex !== currentRound}
