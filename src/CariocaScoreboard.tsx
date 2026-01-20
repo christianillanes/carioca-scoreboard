@@ -48,20 +48,18 @@ function CariocaScoreboard() {
 
   const addPlayer = () => {
     if (newPlayerName.trim() && players.length < 6) {
-      const newScores = Array(8).fill(null)
+      let newScores: (number | null)[] = Array(8).fill(null)
       const newWinners = Array(8).fill(false)
       
       if (players.length > 0) {
         // Calculate total scores for each player
         const playerTotals = players.map((p, i) => ({ index: i, total: getTotalScore(p) }))
-        const maxTotal = Math.max(...playerTotals.map(pt => pt.total))
+        const maxTotal = Math.max(...playerTotals.map(pt => pt.total || 0))
         const losingPlayers = playerTotals.filter(pt => pt.total === maxTotal)
         
         // Copy scores from one of the losing players
         const losingPlayer = players[losingPlayers[0].index]
-        for (let round = 0; round < 8; round++) {
-          newScores[round] = losingPlayer.scores[round]
-        }
+        newScores = [...losingPlayer.scores]
       }
       
       setPlayers([...players, { name: newPlayerName.trim(), scores: newScores, winners: newWinners }])
