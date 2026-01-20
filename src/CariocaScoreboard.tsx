@@ -155,7 +155,7 @@ function CariocaScoreboard() {
 
   return (
     <div className="scoreboard">
-      <h1>Carioca Scoreboard</h1>
+      <h1>Marcador de Carioca</h1>
       
       {players.length === 0 ? (
         <div className="setup">
