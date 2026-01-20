@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import './CariocaScoreboard.css'
+import { translations } from './translations'
+import type { Language } from './translations'
 
 interface Player {
   name: string
@@ -7,23 +9,15 @@ interface Player {
   winners: boolean[]
 }
 
-const ROUNDS = [
-  '2 Trios',
-  '1 Trio + 1 Escala',
-  '2 Escalas',
-  '3 Trios',
-  '2 Trios + 1 Escala',
-  '1 Trio + 2 Escalas',
-  '4 Trios',
-  '3 Escalas'
-]
-
 function CariocaScoreboard() {
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('carioca-language')
+    return (saved as Language) || 'es'
+  })
   const [players, setPlayers] = useState<Player[]>(() => {
     const saved = localStorage.getItem('carioca-players')
     if (saved) {
       const parsed = JSON.parse(saved) as Player[]
-      // Migrate old data to include winners field
       return parsed.map((p) => ({
         ...p,
         winners: p.winners || Array(8).fill(false)
@@ -36,6 +30,13 @@ function CariocaScoreboard() {
     const saved = localStorage.getItem('carioca-round')
     return saved ? parseInt(saved) : 0
   })
+
+  const t = translations[language]
+  const ROUNDS = t.rounds
+
+  useEffect(() => {
+    localStorage.setItem('carioca-language', language)
+  }, [language])
 
   useEffect(() => {
     localStorage.setItem('carioca-players', JSON.stringify(players))
@@ -50,7 +51,6 @@ function CariocaScoreboard() {
       const newScores = Array(8).fill(null)
       const newWinners = Array(8).fill(false)
       
-      // For each round, assign the highest score from existing players
       if (players.length > 0) {
         for (let round = 0; round < 8; round++) {
           const maxScore = Math.max(...players.map(p => p.scores[round] ?? 0))
@@ -65,9 +65,7 @@ function CariocaScoreboard() {
 
   const toggleWinner = (playerIndex: number, round: number) => {
     const newPlayers = [...players]
-    // Unset all winners for this round
     newPlayers.forEach(p => p.winners[round] = false)
-    // Set this player as winner and score to 0
     newPlayers[playerIndex].winners[round] = true
     newPlayers[playerIndex].scores[round] = 0
     setPlayers(newPlayers)
@@ -83,17 +81,15 @@ function CariocaScoreboard() {
     
     const newScore = parseInt(score)
     
-    // Check if score is a multiple of 5
     if (newScore % 5 !== 0) {
-      alert('Los puntos deben ser múltiplos de 5')
+      alert(t.errorMultiple5)
       return
     }
     
-    // Check if trying to set 0 and another player already has 0 in this round
     if (newScore === 0) {
       const hasWinner = players.some((p, i) => i !== playerIndex && p.scores[round] === 0)
       if (hasWinner) {
-        alert('Solo un jugador puede tener 0 puntos por ronda (el ganador)')
+        alert(t.errorOneWinner)
         return
       }
     }
@@ -118,7 +114,7 @@ function CariocaScoreboard() {
   }
 
   const resetGame = () => {
-    if (confirm('¿Reiniciar el juego?')) {
+    if (confirm(t.resetConfirm)) {
       setPlayers([])
       setCurrentRound(0)
     }
@@ -126,22 +122,20 @@ function CariocaScoreboard() {
 
   const nextRound = () => {
     if (currentRound < 7) {
-      // Check if there's a winner
       const hasWinner = players.some(p => p.winners[currentRound])
       if (!hasWinner) {
-        alert('Debe seleccionar un ganador antes de avanzar')
+        alert(t.errorSelectWinner)
         return
       }
       
-      // Check if all non-winners have valid scores (not null/empty and not 0)
       const allScoresValid = players.every(p => {
-        if (p.winners[currentRound]) return true // Winner is valid
+        if (p.winners[currentRound]) return true
         const score = p.scores[currentRound]
         return score !== null && score > 0
       })
       
       if (!allScoresValid) {
-        alert('Todos los jugadores deben tener puntos asignados (mayores a 0)')
+        alert(t.errorAllScores)
         return
       }
       
@@ -155,21 +149,21 @@ function CariocaScoreboard() {
 
   return (
     <div className="scoreboard">
-      <h1>Marcador de Carioca</h1>
+      <h1>{t.title}</h1>
       
       {players.length === 0 ? (
         <div className="setup">
-          <h2>Agregar Jugadores</h2>
+          <h2>{t.addPlayers}</h2>
           <div className="add-player">
             <input
               type="text"
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-              placeholder="Nombre del jugador"
+              placeholder={t.playerName}
               maxLength={15}
             />
-            <button onClick={addPlayer}>Agregar</button>
+            <button onClick={addPlayer}>{t.addPlayer}</button>
           </div>
         </div>
       ) : (
@@ -177,7 +171,7 @@ function CariocaScoreboard() {
           <div className="round-nav">
             <button onClick={prevRound} disabled={currentRound === 0}>←</button>
             <div className="round-info">
-              <h2>Ronda {currentRound + 1}</h2>
+              <h2>{t.round} {currentRound + 1}</h2>
               <p>{ROUNDS[currentRound]}</p>
             </div>
             <button onClick={nextRound} disabled={currentRound === 7}>→</button>
@@ -187,12 +181,12 @@ function CariocaScoreboard() {
             <table>
               <thead>
                 <tr>
-                  <th>Jugador</th>
+                  <th>{t.player}</th>
                   {ROUNDS.map((_, i) => (
-                    <th key={i} className={i === currentRound ? 'current' : ''}>R{i + 1}</th>
+                    <th key={i} className={i === currentRound ? 'current' : ''}>{t.roundPrefix}{i + 1}</th>
                   ))}
-                  <th>Total</th>
-                  <th>Rank</th>
+                  <th>{t.total}</th>
+                  <th>{t.rank}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -213,7 +207,7 @@ function CariocaScoreboard() {
                               padding: '0',
                               opacity: player.winners[rIndex] ? 1 : 0.3
                             }}
-                            title="Ganador"
+                            title={t.winner}
                             disabled={rIndex !== currentRound}
                           >
                             ⭐
@@ -247,20 +241,44 @@ function CariocaScoreboard() {
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-                placeholder="Agregar jugador"
+                placeholder={t.addPlayer}
                 maxLength={15}
               />
-              <button onClick={addPlayer}>+</button>
+              <button onClick={addPlayer}>{t.add}</button>
             </div>
           )}
 
           <div className="actions">
-            <button onClick={resetGame} className="reset">Reiniciar Juego</button>
+            <button onClick={resetGame} className="reset">{t.resetGame}</button>
           </div>
 
           <div className="scoring-guide">
-            <h3>Puntuación</h3>
-            <p>Jokers: 30 | Ases: 15 | 8-K: 10 | 2-7: 5</p>
+            <h3>{t.scoring}</h3>
+            <p>{t.scoringGuide}</p>
+          </div>
+
+          <div className="language-selector">
+            <button 
+              onClick={() => setLanguage('es')} 
+              className={language === 'es' ? 'active' : ''}
+              title="Español"
+            >
+              🇪🇸
+            </button>
+            <button 
+              onClick={() => setLanguage('en')} 
+              className={language === 'en' ? 'active' : ''}
+              title="English"
+            >
+              🇬🇧
+            </button>
+            <button 
+              onClick={() => setLanguage('sv')} 
+              className={language === 'sv' ? 'active' : ''}
+              title="Svenska"
+            >
+              🇸🇪
+            </button>
           </div>
         </>
       )}

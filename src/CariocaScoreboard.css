@@ -183,6 +183,32 @@ td input {
   font-family: monospace;
 }
 
+.language-selector {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.language-selector button {
+  font-size: 2rem;
+  padding: 0.5rem;
+  background: none;
+  border: 2px solid transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.language-selector button:hover {
+  transform: scale(1.1);
+}
+
+.language-selector button.active {
+  border-color: #646cff;
+  background: #e8eaff;
+}
+
 @media (max-width: 768px) {
   .scoreboard {
     padding: 0.5rem;
